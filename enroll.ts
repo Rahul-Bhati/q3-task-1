@@ -29,24 +29,26 @@ const mintTs = Keypair.generate();
 const [authorityPda] = PublicKey.findProgramAddressSync(
     [Buffer.from("collection"), mintCollection.toBuffer()],
     program.programId
-  );
+);
 console.log("Authority PDA:", authorityPda.toBase58());
 
 // Execute the initialize transaction
 (async () => {
-    try {
+    const accountInfo = await connection.getAccountInfo(account_key);
+    if (!accountInfo) {
         const txhash = await program.methods
             .initialize("Rahul-Bhati")
             .accountsPartial({
                 user: keypair.publicKey,
                 account: account_key,
-                system_program: SystemProgram.programId, 
+                system_program: SystemProgram.programId,
             })
             .signers([keypair])
             .rpc();
-        console.log(`Success! Check out your TX here: https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
-    } catch (e) {
-        console.error(`Oops, something went wrong: ${e}`);
+
+        console.log(`Success! TX: https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
+    } else {
+        console.log("Account already exists, skipping initialize.");
     }
 })();
 
@@ -54,42 +56,66 @@ console.log("Authority PDA:", authorityPda.toBase58());
 (async () => {
     try {
         const txhash = await program.methods
-        .update("Rahul-Bhati")
-        .accountsPartial({
-            user: keypair.publicKey,
-            account: account_key,
-        system_program: SystemProgram.programId,
-    })
-      .signers([keypair])
-      .rpc();
-      
-      console.log(
-          `GitHub updated: https://explorer.solana.com/tx/${txhash}?cluster=devnet`
+            .update("Rahul-Bhati")
+            .accountsPartial({
+                user: keypair.publicKey,
+                account: account_key,
+                system_program: SystemProgram.programId,
+            })
+            .signers([keypair])
+            .rpc();
+
+        console.log(
+            `GitHub updated: https://explorer.solana.com/tx/${txhash}?cluster=devnet`
         );
-  } catch (e) {
-    console.error(" Update failed:", e);
-  }
+    } catch (e) {
+        console.error(" Update failed:", e);
+    }
 })();
 
 // [99,111,108,108,101,99,116,105,111,110]
 // Execute the submitTs transaction
+// (async () => {
+//     try {
+//         const txhash = await program.methods
+//             .submit_ts()
+//             .accountsPartial({
+//                 user: keypair.publicKey, // user
+//                 account: account_key, // account
+//                 mint: mintTs.publicKey, // mint
+//                 collection: mintCollection, // collection
+//                 authority: authorityPda, // authority 
+//                 mpl_core_program: MPL_CORE_PROGRAM_ID, // mpl_core+program
+//                 system_program: SystemProgram.programId, // system_program
+//             })
+//             .signers([keypair, mintTs])
+//             .rpc();
+//         console.log(`Success! Check out your TX here: https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
+//     } catch (e) {
+//         console.error(`Oops, something went wrong: ${e}`);
+//     }
+// })
+
 (async () => {
     try {
+        console.log("Submitting TS...");
         const txhash = await program.methods
-            .submit_ts()
+            .submitTs()
             .accountsPartial({
-                user: keypair.publicKey, // user
-                account: account_key, // account
-                mint: mintTs.publicKey, // mint
-                collection: mintCollection, // collection
-                authority: authorityPda, // authority 
-                mpl_core_program: MPL_CORE_PROGRAM_ID, // mpl_core+program
-                system_program: SystemProgram.programId, // system_program
+                user: keypair.publicKey,
+                account: account_key,
+                mint: mintTs.publicKey,
+                collection: mintCollection,
+                authority: authorityPda,
+                mpl_core_program: MPL_CORE_PROGRAM_ID,
+                system_program: SystemProgram.programId,
             })
             .signers([keypair, mintTs])
             .rpc();
-        console.log(`Success! Check out your TX here: https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
-    } catch (e) {
-        console.error(`Oops, something went wrong: ${e}`);
+
+        console.log(`Submit success! https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
+    } catch (e: any) {
+        console.error("Submit TS failed:", e);
+        if (e.logs) console.error("Logs:", e.logs);
     }
-})
+})();
